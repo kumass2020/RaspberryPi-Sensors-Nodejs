@@ -1,5 +1,6 @@
 const temp = require("node-dht-sensor");
 const lcd = require('./myLcd.js');
+const fan = require('./myFan.js');
 
 lcd.init();
 
@@ -13,7 +14,7 @@ const humitemp = {
 
     init: (number) => {
         humitemp.pin = number;
-        console.log('초기화 pin: ' + humitemp.pin);
+        console.log('초기?�� pin: ' + humitemp.pin);
     },
     read: () => {
         let humistr = '';
@@ -25,10 +26,12 @@ const humitemp = {
                 console.log(humitemp.temp + 'C ' + humitemp.humi + '%');
                 lcd.printSecondLine(humistr)
 
-                if (ex_humi < humi) {
-                    
+                if (humitemp.ex_humi < humitemp.humi) {
+                    fan.turnOn();
+                } else {
+                    fan.turnOff();
                 }
-                humitemp.ex_humi = humi;
+                humitemp.ex_humi = humitemp.humi;
             }
             else
                 console.log(err);
