@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="/socket.io/socket.io.js"></script>
+
+    <script>
+        window.onload = function () {
+            var socket = io.connect();
+            document.getElementById('start').onclick = function () {
+                var text = document.getElementById('text').value;
+                socket.emit('startmsg', text);
+            };
+            document.getElementById('clear').onclick = function () {
+                socket.emit('clear');
+            };
+        };
+    </script>
+</head>
+
+<body>
+    <h2> LCD 표시 </h2>
+    <hr>
+    표시할 메세지: <input type="text" id="text" value="example" />
+    <input type="button" id="start" value="LCD 가동" />
+    <input type="button" id="clear" value="LCD 클리어" />
+</body>
+
+</html>

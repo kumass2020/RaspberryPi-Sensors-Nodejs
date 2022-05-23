@@ -2,14 +2,12 @@ const http = require('http');
 const fs = require('fs');
 const network = require('network');
 const socketio = require('socket.io');
-const mcpadc = require('mcp-spi-adc');
-const joystick = require('./sensors/joystick.js');
-const lightsensor = require('./sensors/light.js');
-const PORT = 65090;
+const lcd = require('./lcd.js');
+const PORT = 65051;
 
 const serverbody = (request, response) => {
-    fs.readFile('views/chart.html', 'utf8', (err, data) => {
-        response.writeHead(200, {'Content-Type': 'text/html'});
+    fs.readFile('./web.html', 'utf8', (err, data) => {
+        response.writeHead(200, { 'Content-Type': 'text/html' });
         response.end(data);
         console.log("웹페이지에 접속하였습니다");
     });
@@ -18,30 +16,17 @@ const serverbody = (request, response) => {
 const server = http.createServer(serverbody);
 const io = require('socket.io')(server);
 
-joystick.init(io);
-lightsensor.init(io);
+lcd.init();
 
 io.on('connection', client => {
     client.on('startmsg', function (data) {
-        console.log('가동메시지 수신(측정주기:%d)!', data);
-        timeout = data;
-        joystick.start(data);
+        console.log('가동메시지 수신:' + data);
+        lcd.printMessage(data);
     });
 
-    client.on('stopmsg', function (data) {
-        console.log('중지메시지 수신!');
-        joystick.stop();
-    });
-
-    client.on('startmsgLight', function (data1, data2) {
-        console.log('가동메시지 수신(측정주기:%d, 기준값:%d)!', data1, data2);
-        timeout = data1;
-        lightsensor.start(data1, data2);
-    });
-
-    client.on('stopmsgLight', function (data) {
-        console.log('중지메시지 수신!');
-        lightsensor.stop();
+    client.on('clear', function () {
+        console.log('LCD clear');
+        lcd.clear();
     });
 });
 
@@ -50,7 +35,7 @@ server.listen(PORT, () => {
         if (ifaces !== undefined) {
             if (ifaces.name == 'wlan0') {
                 console.log("============================================");
-                console.log('조이스틱 제어용 웹서버');
+                console.log('LCD 제어용 웹서버');
                 console.log('웹서버가 대기중입니다 http://' + ifaces.ip_address + ':' + PORT);
                 console.log('웹브라우저를 열고, 라즈베리파이 웹주소로 접속하세요');
                 console.log("=============================================");
@@ -60,6 +45,6 @@ server.listen(PORT, () => {
 });
 
 process.on('SIGINT', () => {
-    joystick.terminate();
-    lightsensor.terminate();
+    lcd.clear();
+    process.exit();
 });

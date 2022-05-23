@@ -2,12 +2,14 @@ const gpio = require('pigpio').Gpio;
 const mcpadc = require('mcp-spi-adc');
 const SPI_SPEED = 1000000
 const LIGHT = 3;
+const led = require('./led.js');
 
 const lightSensor = {
     timerId: 0,
     timeout: 0,
     lightdata: -1,
     lightValue: -1,
+    limitValue: 0,
     init: (io) => {
         lightSensor.lightdata = mcpadc.openMcp3208(LIGHT,
             {speedHz: SPI_SPEED},
@@ -21,15 +23,22 @@ const lightSensor = {
     read: () => {
         // let lightValue = -1;
         lightSensor.lightdata.read((error, reading) => {
-            console.log("현재 측정된 조도값(%d)", reading.rawValue);
-            lightValue = reading.rawValue;
-            if (lightValue != -1) {
-                lightSensor.webio.sockets.emit('watchLight', lightValue);
-                lightValue = -1;
+            lightSensor.lightValue = reading.rawValue;
+            console.log("현재 측정된 조도값(%d), 기준값(%d)", parseInt(lightSensor.lightValue), parseInt(lightSensor.limitValue));
+            // console.log(typeof lightSensor.lightValue, typeof parseInt(lightSensor.limitValue));
+            if ( parseInt(lightSensor.lightValue) < parseInt(lightSensor.limitValue) ) {
+                led.turnOn();
+            } else {
+                led.turnOff();
+            }
+            if (lightSensor.lightValue != -1) {
+                lightSensor.webio.sockets.emit('watchLight', lightSensor.lightValue);
+                lightSensor.lightValue = -1;
             }
         });
     },
-    start: (timerValue) => {
+    start: (timerValue, limit) => {
+        lightSensor.limitValue = limit;
         if (lightSensor.timerId == 0) {
             lightSensor.timerId = setInterval(lightSensor.read, timerValue);
         }
@@ -51,6 +60,6 @@ const lightSensor = {
 
 module.exports.init = function(io) { lightSensor.init(io); };
 module.exports.read = function() { lightSensor.read(); };
-module.exports.start = function(timerValue) { lightSensor.start(timerValue);};
+module.exports.start = function(timerValue, limit) { lightSensor.start(timerValue, limit);};
 module.exports.stop = function() { lightSensor.stop(); };
 module.exports.terminate = function() { lightSensor.terminate(); };
