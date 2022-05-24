@@ -1,7 +1,8 @@
 const http = require('http');
 const fs = require('fs');
 const network = require('network');
-const sonic = require('./sensors/sonic.js');
+const sonic = require('./sensors/sonicdb.js');
+const dbif = require('./db/dbif.js');
 const PORT = 65001;
 
 const webServer = (request, response) => {
@@ -25,6 +26,7 @@ server.listen(PORT, () => {
             }
         }
     });
+    setInterval(dbif.select, 10000);
 });
 
 const io = require('socket.io')(server);
